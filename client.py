@@ -27,7 +27,7 @@ from pyaudio import PyAudio, paInt16
 from lib.music import neteaseMusic
 import requests
 import re
-from lib.asr import Msp
+from lib.asr import Asr
 
 
 reload(sys)
@@ -247,7 +247,7 @@ class ClientFrame(wx.Frame):
         audio_collect = []
 
         #asr 初始化
-        asr = Msp()
+        asr = Asr()
 
         # 开启声音输入
         pa = PyAudio() 

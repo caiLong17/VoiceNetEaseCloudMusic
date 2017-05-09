@@ -28,16 +28,10 @@ except Exception as e:
     dll = windll.LoadLibrary('./bin/msc.dll')
 
 
-# print dll.MSPLogin
-# print dll.QTTSSessionBegin
-# print dll.QTTSTextPut
-# print dll.QTTSAudioGet
-# print dll.QTTSSessionEnd
-
 uname = "18917110835"
 upass = ""
 
-login_params = "appid = 590c9c55, work_dir = ."
+
 session_begin_params = "sub=iat,aue=speex-wb;7,result_type=plain,result_encoding=utf8,language=zh_cn," \
                        "accent=mandarin,sample_rate=16000,domain=music,vad_bos=1000,vad_eos=1000"
 grammar_id = None  # '346c55176c3a5fc69750a3068b1a8457'
@@ -77,7 +71,7 @@ filename = "iflytek01.wav"
 # filename = "ryhan.wav"
 
 
-class Msp:
+class Asr:
     def __init__(self):
         self.login()
         self.sessionID = None
@@ -87,6 +81,7 @@ class Msp:
 
 
     def login(self):
+        login_params = "appid = 590c9c55, work_dir = ."
         ret = dll.MSPLogin(None, None, login_params)
         # self.ret = dll.MSPLogin(None, None, login_params)
         # print('MSPLogin =>'), self.ret
