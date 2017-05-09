@@ -19,7 +19,7 @@
 ``python client.py``
 
 ## 命令行支持命令  
-
+| :----:  | :----:  |
 | play        | 开始播放   |   
 | pause       | 暂停播放   |   
 | resume      | 恢复播放   |
