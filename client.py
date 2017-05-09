@@ -27,7 +27,11 @@ from pyaudio import PyAudio, paInt16
 from lib.music import neteaseMusic
 import requests
 import re
+from lib.asr import Msp
 
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 ############################ Utility functions ############################
 def console_print(*args):
@@ -134,7 +138,7 @@ class ClientFrame(wx.Frame):
         # 默认cloud 测试开启 录音自动打开
         self.audio_in = True
 
-
+        
     def on_close_window(self, evt):
         self.Destroy()
         # 用完取消注册表设置
@@ -233,7 +237,7 @@ class ClientFrame(wx.Frame):
         '''
         调试云端接口
         '''
-        NUM_SAMPLES = 2000      # pyAudio内部缓存的块的大小
+        NUM_SAMPLES = 2048      # pyAudio内部缓存的块的大小
         SAMPLING_RATE = 16000    # 取样频率
         LEVEL = 1000            # 声音保存的阈值
         COUNT_NUM = 5           # NUM_SAMPLES个取样之内出现COUNT_NUM个大于LEVEL的取样则记录声音
@@ -241,6 +245,9 @@ class ClientFrame(wx.Frame):
 
         audio_cut = 0
         audio_collect = []
+
+        #asr 初始化
+        asr = Msp()
 
         # 开启声音输入
         pa = PyAudio() 
@@ -271,24 +278,28 @@ class ClientFrame(wx.Frame):
             else:
 
                 if max_audio_data > audio_cut:
-                    index += 1
                     if not SESSION_STARTED:
                         SESSION_STARTED = True
                         console_print('Start session.')
-
-
+                        asr.session_begin()
                     #TODO push data
-                    # push(string_audio_data, index=index+1)
+                    asr.data_push(string_audio_data, index)
+                    index += 1
                 else:
                     if last_audio_data > audio_cut:
                         console_print('Stop session.')
                         SESSION_STARTED = False
+                        asr.data_push(string_audio_data, index)
+                        asr.data_push([], index+1)
                         #TODO push last data
                         # push(string_audio_data, index=index+1)
                         # push([], index=index+2)
                         index = 0
                         #TODO get result
-                        # console_print(result)
+                        asr_result = asr.get_result()
+                        asr.session_end()
+                        console_print(type(asr_result))
+                        console_print(asr_result.decode('utf-8'))
                         #call Tree
                 last_audio_data = max_audio_data
 
@@ -547,7 +558,7 @@ if __name__ == "__main__":
 
     COOKIES = {"appver":"2.0.2"}
     HEADERS = {"Referer":"http://music.163.com"}
-    
+
     MusicAPP = Music()
     APP = wx.PySimpleApp() 
     CLIENT_FRAME = ClientFrame()

@@ -12,12 +12,21 @@ sys.setdefaultencoding('utf-8')
 # print sys.getdefaultencoding()
 
 from ctypes import *
+import os
 import time
 import pyaudio
 
-sys.path.append('./bin/')
+try:
+    sys_path_dir = os.path.realpath(sys.path[0])
+    if os.path.isfile(sys_path_dir):
+        sys_path_dir = os.path.dirname(sys_path_dir)
+    G_CLIENT_DIR = os.path.abspath(sys_path_dir)
+    DLL_PATH = os.path.join(G_CLIENT_DIR, "lib\\bin\\msc.dll")
+    dll = windll.LoadLibrary(DLL_PATH)
+except Exception as e:
+    sys.path.append('.')
+    dll = windll.LoadLibrary('./bin/msc.dll')
 
-dll = windll.LoadLibrary("./bin/msc.dll")
 
 # print dll.MSPLogin
 # print dll.QTTSSessionBegin
@@ -30,7 +39,7 @@ upass = ""
 
 login_params = "appid = 590c9c55, work_dir = ."
 session_begin_params = "sub=iat,aue=speex-wb;7,result_type=plain,result_encoding=utf8,language=zh_cn," \
-                       "accent=mandarin,sample_rate=16000,domain=music,vad_bos=2000,vad_eos=2000"
+                       "accent=mandarin,sample_rate=16000,domain=music,vad_bos=1000,vad_eos=1000"
 grammar_id = None  # '346c55176c3a5fc69750a3068b1a8457'
 
 FRAME_LEN = 640  # Byte
@@ -70,80 +79,62 @@ filename = "iflytek01.wav"
 
 class Msp:
     def __init__(self):
-        pass
+        self.login()
+        self.sessionID = None
+        self.recogStatus = None
+        self.epStatus = None
+        self.ret = None
+
 
     def login(self):
         ret = dll.MSPLogin(None, None, login_params)
+        # self.ret = dll.MSPLogin(None, None, login_params)
+        # print('MSPLogin =>'), self.ret
         print('MSPLogin =>'), ret
 
-        pass
 
-    def isr(self, audiofile, session_begin_params, grammar_id):
-        ret = c_int()
-        sessionID = dll.QISRSessionBegin(grammar_id, session_begin_params, byref(ret))
-        print 'QISRSessionBegin => sessionID:', sessionID, 'ret:', ret.value
+    def session_begin(self):
+        self.epStatus = c_int(0)
+        self.recogStatus = c_int(0)
+        self.ret = c_int()
+        self.sessionID = dll.QISRSessionBegin(grammar_id, session_begin_params, byref(self.ret))
+        print 'QISRSessionBegin => sessionID:', self.sessionID, 'ret:', self.ret.value
 
-        # 每秒【1000ms】  16000 次 * 16 bit 【20B】 ，每毫秒：1.6 * 16bit 【1.6*2B】 = 32Byte
-        # 1帧音频20ms【640B】 每次写入 10帧=200ms 【6400B】
-
-
-        p = pyaudio.PyAudio()
-        stream = p.open(rate=16000,
-                        channels=1,
-                        format=pyaudio.paInt16,
-                        input=True,
-                        frames_per_buffer=2048)
-
-        epStatus = c_int(0)
-        recogStatus = c_int(0)
-
-        wavData = stream.read(2048)
-
-        ret = dll.QISRAudioWrite(sessionID, wavData, len(wavData), MSP_AUDIO_SAMPLE_FIRST, byref(epStatus),
-                                 byref(recogStatus))
-        print 'len(wavData):', len(
-            wavData), 'QISRAudioWrite ret:', ret, 'epStatus:', epStatus, 'recogStatus:', recogStatus
-
-        times = 0
-        while True:
-            wavData = stream.read(2048)
-            ret = dll.QISRAudioWrite(sessionID, wavData, len(wavData), MSP_AUDIO_SAMPLE_CONTINUE, byref(epStatus),
-                                     byref(recogStatus))
-            print 'len(wavData):', len(
-                wavData), 'QISRAudioWrite ret:', ret, 'epStatus:', epStatus, 'recogStatus:', recogStatus
-            time.sleep(0.02)
-            times += 1
-
-            if epStatus.value != MSP_EP_IN_SPEECH:
-                break
-
-        ret = dll.QISRAudioWrite(sessionID, None, 0, MSP_AUDIO_SAMPLE_LAST, byref(epStatus),
-                                 byref(recogStatus))
-        print 'len(wavData):', len(
-            wavData), 'QISRAudioWrite ret:', ret, 'epStatus:', epStatus, 'recogStatus:', recogStatus
+    def session_end(self):
+        self.ret = c_int()
+        dll.QISRSessionEnd(self.sessionID, byref(self.ret))
+        print 'QISRSessionEnd => sessionID:', self.sessionID, 'ret:', self.ret.value
 
 
-        # -- 获取音频
+    def data_push(self, data, index):
+        if index == 0:
+            self.ret = dll.QISRAudioWrite(self.sessionID, data, len(data), MSP_AUDIO_SAMPLE_FIRST, byref(self.epStatus),
+                                     byref(self.recogStatus))
+        else:
+            if data:
+                self.ret = dll.QISRAudioWrite(self.sessionID, data, len(data), MSP_AUDIO_SAMPLE_CONTINUE, byref(self.epStatus),
+                                     byref(self.recogStatus))
+            else:
+                self.ret = dll.QISRAudioWrite(self.sessionID, None, 0, MSP_AUDIO_SAMPLE_LAST, byref(self.epStatus),
+                                 byref(self.recogStatus))
+
+        print ('index:', index, 'len(wavData):', len(data), 'QISRAudioWrite ret:', 
+                self.ret, 'epStatus:', self.epStatus, 'recogStatus:', self.recogStatus)
+
+
+    def get_result(self):
         laststr = ''
-        while recogStatus.value != MSP_REC_STATUS_COMPLETE:
-            ret = c_int()
+        times = 0
+        while self.recogStatus.value != MSP_REC_STATUS_COMPLETE:
+            times += 1
+            self.ret = c_int()
             dll.QISRGetResult.restype = c_char_p
-            retstr = dll.QISRGetResult(sessionID, byref(recogStatus), 0, byref(ret))
+            retstr = dll.QISRGetResult(self.sessionID, byref(self.recogStatus), 0, byref(self.ret))
             if retstr is not None:
                 laststr += retstr
-            print 'ret:', ret, 'recogStatus:', recogStatus
-
+            print 'ret:', self.ret, 'recogStatus:', self.recogStatus
             time.sleep(0.2)
+            if times > 5:
+                break
+        return laststr
 
-        print '*' * 20, 'laststr:', '*' * 20
-        print laststr
-        print '*' * 20, 'laststr:', '*' * 20
-
-    pass
-
-
-if __name__ == "__main__":
-    msp = Msp()
-
-    msp.login()
-    msp.isr(filename, session_begin_params, grammar_id)
