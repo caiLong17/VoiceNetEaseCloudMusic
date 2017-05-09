@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" /> 
+
+	<link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+	<script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+	<script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+
+</head>
+
+<style type="text/css">
+	html{
+		width: 100%;
+		height: 100%;
+	}
+	body{
+		overflow: hidden;
+		width: 100%;
+		height: 100%;
+		display: table;
+	}
+/*	img{
+		height: 100%;
+		width: 100%;
+		position: absolute;
+	}*/
+	h1, h2, h3, h4, h5, h6{
+		padding: 0;
+		margin: 0;
+	}
+	p{
+		font-size: 18px;
+	}
+	.middle-box{
+		display: table;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0; 
+		height: 534px;
+		width: 300px;
+		background-size: contain;
+	}
+	.middle-inner{
+		width: 90%;
+		padding: 10px;
+		display: table-cell; 
+		vertical-align:middle; 
+		text-align:center;
+		color: white;
+	}
+	.main_background{
+		background-image: url(../images/main.png);
+	}
+	.dialog_background{
+		background-image: url(../images/dialog.png);
+	}
+	#title{
+		display: table-caption;
+		height: 20px;
+		width: 90%;
+		color: white;
+		text-align: center;
+	}
+	#header{
+		display: table-header-group;
+		height: 20px;
+		width: 90%;
+		color: white;
+		text-align: center;
+	}
+	#footer{
+		position: absolute;
+		top: 500px;
+		height: 20px;
+		width: 100%;
+		color: white;
+		text-align: center;
+	}
+	#tuner{
+		width: 100px;
+		margin-top: 380px;
+    	margin-left: 100px;
+    	color: #aaa;
+	}
+	#tuner p{
+		font-size: 14px;
+	}
+	.black{
+		color: black;
+	}
+	.progress{
+		height: 4px;
+		margin-left: 6px;
+	}
+	#music{
+		position: absolute;
+		top: 500px;
+		height: 20px;
+		width: 100%;
+		color: white;
+		text-align: center;		
+	}
+</style>
+
+<!--[if lt IE 8]>
+<style>
+.middle-inner { position: absolute; top:50%;}
+.middle-inner p {position: relative; top: -50%}
+</style>
+<![endif]-->
+
+<body>
+	<img id="b0" class="back_image" src="../images/main.png" height="550" width="310">
+	<img id="b1" class="back_image" src="../images/dialog.png" height="550" width="310">
+	<img id="b2" class="back_image" src="../images/tuner.png" height="550" width="310">
+	<img id="b3" class="back_image" src="../images/tuner_list.png" height="550" width="310">
+	<img id="icon-speaker" class="back_image" src="../images/speaker.png" height="32" width="32">
+	<div class="middle-box">
+		<div id="title">
+		</div>
+		<div id="header">
+		</div>
+		<div id="tuner" style="display: none;">
+		</div>
+		<div class="middle-inner">
+		</div>
+		<div id="footer">
+		</div>
+	</div>
+	
+</body>
+
+<script type="text/javascript">
+	$(document).ready(function(){
+		$('.back_image').hide();
+		$('#b0').show();
+	})
+</script>
+</html>
