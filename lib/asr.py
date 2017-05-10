@@ -1,15 +1,12 @@
 #! /usr/bin/env python
 # coding=utf-8
 
-__author__ = 'ryhan'
+__author__ = 'codehai'
 
 
-# 以下代码解决输出乱码问题
 import sys
-# print sys.getdefaultencoding()
 reload(sys)
 sys.setdefaultencoding('utf-8')
-# print sys.getdefaultencoding()
 
 from ctypes import *
 import os
@@ -17,6 +14,7 @@ import time
 import pyaudio
 
 try:
+    #导入绝对路径msc.dll
     sys_path_dir = os.path.realpath(sys.path[0])
     if os.path.isfile(sys_path_dir):
         sys_path_dir = os.path.dirname(sys_path_dir)
@@ -24,20 +22,12 @@ try:
     DLL_PATH = os.path.join(G_CLIENT_DIR, "lib\\bin\\msc.dll")
     dll = windll.LoadLibrary(DLL_PATH)
 except Exception as e:
+    #导入相对路径msc.dll
     sys.path.append('.')
     dll = windll.LoadLibrary('./bin/msc.dll')
 
 
-uname = "18917110835"
-upass = ""
-
-
-session_begin_params = "sub=iat,aue=speex-wb;7,result_type=plain,result_encoding=utf8,language=zh_cn," \
-                       "accent=mandarin,sample_rate=16000,domain=music,vad_bos=1000,vad_eos=1000"
-grammar_id = None  # '346c55176c3a5fc69750a3068b1a8457'
-
-FRAME_LEN = 640  # Byte
-
+#如果使用讯飞自带的vad检测会用到以下状态码
 MSP_SUCCESS = 0
 # 端点数据
 MSP_EP_LOOKING_FOR_SPEECH = 0
@@ -66,10 +56,6 @@ MSP_REC_STATUS_REJECTED = 9
 MSP_REC_STATUS_NO_SPEECH_FOUND = 10
 MSP_REC_STATUS_FAILURE = MSP_REC_STATUS_NO_MATCH
 
-filename = "tts_sample.wav"
-filename = "iflytek01.wav"
-# filename = "ryhan.wav"
-
 
 class Asr:
     def __init__(self):
@@ -83,17 +69,19 @@ class Asr:
     def login(self):
         login_params = "appid = 590c9c55, work_dir = ."
         ret = dll.MSPLogin(None, None, login_params)
-        # self.ret = dll.MSPLogin(None, None, login_params)
-        # print('MSPLogin =>'), self.ret
         print('MSPLogin =>'), ret
 
 
     def session_begin(self):
+        session_begin_params = "sub=iat,aue=speex-wb;7,result_type=plain,result_encoding=utf8,language=zh_cn," \
+                       "accent=mandarin,sample_rate=16000,domain=music,vad_bos=1000,vad_eos=1000"
+        grammar_id = None
         self.epStatus = c_int(0)
         self.recogStatus = c_int(0)
         self.ret = c_int()
         self.sessionID = dll.QISRSessionBegin(grammar_id, session_begin_params, byref(self.ret))
         print 'QISRSessionBegin => sessionID:', self.sessionID, 'ret:', self.ret.value
+
 
     def session_end(self):
         self.ret = c_int()
